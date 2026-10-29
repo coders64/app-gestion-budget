@@ -20,8 +20,12 @@ export type EnvItem =
 
 export interface Envisaged {
   items: EnvItem[];
-  /** Ce que les envisagés retireraient du reste de ce mois-ci (part de la membre). */
+  /** Ce que les achats envisagés retireraient du reste de ce mois-ci (part de la membre). Les abonnements sont hors plafond. */
   thisMonth: number;
+  /** Total des achats envisagés à venir (part de la membre). */
+  achats: number;
+  /** Achats envisagés par mois (ce mois-ci et plus tard), dans l'ordre. */
+  months: Array<{ month: string; amount: number }>;
   /** Ce que les abonnements envisagés ajouteraient au coût mensuel. */
   monthly: number;
 }
@@ -31,6 +35,7 @@ export function envisaged(s: Snapshot, member: MemberKey, today: string): Envisa
   const month = monthKey(today);
   const items: EnvItem[] = [];
   let thisMonth = 0;
+  const byMonth = new Map<string, number>();
   let monthly = 0;
   const achats = s.envExpenses.filter((e) => shareFraction(member, e) > 0).sort((x, y) => (x.date < y.date ? -1 : x.date > y.date ? 1 : 0));
   for (const e of achats) {
@@ -38,19 +43,20 @@ export function envisaged(s: Snapshot, member: MemberKey, today: string): Envisa
     const when = m < month ? 'passe' : m === month ? 'ce-mois' : 'plus-tard';
     const share = shareAmt(member, e);
     if (when === 'ce-mois') thisMonth += share;
+    if (when !== 'passe') byMonth.set(m, (byMonth.get(m) ?? 0) + share);
     items.push({ kind: 'achat', item: e, share, when });
   }
   for (const sub of s.envSubs) {
     if (!shareFraction(member, sub)) continue;
     const share = shareAmt(member, sub);
     const charges = chargesFromToday(sub, month, today).length;
-    thisMonth += charges * share;
     monthly += monthlyEq(sub) * shareFraction(member, sub);
     items.push({ kind: 'abo', item: sub, share, charges });
   }
   // Les achats dont le mois est passé d'abord : l'appli demande « Tu l'as acheté ? ».
   items.sort((x, y) => Number(y.kind === 'achat' && y.when === 'passe') - Number(x.kind === 'achat' && x.when === 'passe'));
-  return { items, thisMonth, monthly };
+  const months = [...byMonth.entries()].sort(([a], [b]) => (a < b ? -1 : 1)).map(([month, amount]) => ({ month, amount }));
+  return { items, thisMonth, achats: months.reduce((t, x) => t + x.amount, 0), months, monthly };
 }
 
 export interface SimInput {

@@ -81,7 +81,7 @@ export function Budget(props: {
       {ro && <p className="pill-note">Budget de {s.members[who].name} · lecture seule</p>}
       <ResteCard sum={sum} planned={plannedTotal} poss={ro ? 'sa' : 'ta'} env={env?.thisMonth ?? 0} ro={ro} />
       {env && env.items.length > 0 && (
-        <EnvCard env={env} store={store} me={me} ro={ro} today={props.today} s={s} onEdit={props.onEdit} onSim={props.onSim} />
+        <EnvCard env={env} store={store} me={me} ro={ro} today={props.today} s={s} reste={sum.reste} plafond={sum.plafond} onEdit={props.onEdit} onSim={props.onSim} />
       )}
       <CategoryCard rows={rows} seuil={s.prefs.seuil} />
       <section className="card" aria-label="Dernières dépenses">
@@ -115,6 +115,11 @@ function EnvLine({ amount, ro }: { amount: number; ro: boolean }) {
   );
 }
 
+function AbosLine({ amount }: { amount: number }) {
+  if (amount < 0.005) return null;
+  return <span className="muted sm">+ {eur(amount)} d'abonnements ce mois-ci, hors plafond</span>;
+}
+
 function ResteCard({ sum, planned, poss, env, ro }: { sum: MonthSummary; planned: number; poss: string; env: number; ro: boolean }) {
   if (!sum.plafond || sum.reste === null) {
     return (
@@ -122,7 +127,7 @@ function ResteCard({ sum, planned, poss, env, ro }: { sum: MonthSummary; planned
         <span className="tape" aria-hidden="true" />
         <span className="label">Dépensé ce mois</span>
         <div className="big-row"><span className="big-hand">{eur(sum.perso + sum.commun)}</span></div>
-        {planned > 0 && <span className="hand-line">et {eur(planned)} prévus d'ici la fin du mois</span>}
+        <AbosLine amount={sum.abos + planned} />
         <span className="muted sm">Pas de plafond du mois. Tu peux en fixer un dans Paramètres.</span>
         {env > 0 && <EnvLine amount={sum.perso + sum.commun + env} ro={ro} />}
       </section>
@@ -131,7 +136,6 @@ function ResteCard({ sum, planned, poss, env, ro }: { sum: MonthSummary; planned
   const pct = (x: number) => Math.max(0, Math.min(100, (x / sum.plafond!) * 100));
   const p1 = pct(sum.perso);
   const p2 = Math.min(pct(sum.commun), 100 - p1);
-  const p3 = Math.min(pct(planned), 100 - p1 - p2);
   const over = sum.reste < -0.004;
   return (
     <section className="note" aria-label="Reste du mois">
@@ -144,13 +148,12 @@ function ResteCard({ sum, planned, poss, env, ro }: { sum: MonthSummary; planned
       <div className="dash-bar" aria-hidden="true">
         <i style={{ width: `${p1}%`, background: 'var(--note-perso)' }} />
         <i style={{ width: `${p2}%`, background: 'var(--note-commun)' }} />
-        {p3 > 0 && <i className="hatch" style={{ width: `${p3}%`, ['--hc' as string]: 'var(--note-perso)' }} />}
       </div>
       <div className="legend">
         <span><i style={{ background: 'var(--note-perso)' }} />{eur(sum.perso)} perso</span>
         {sum.commun > 0 && <span><i style={{ background: 'var(--note-commun)' }} />{eur(sum.commun)} {poss} part du commun</span>}
       </div>
-      {planned > 0 && !over && <span className="hand-line">dont {eur(planned)} déjà prévus</span>}
+      <AbosLine amount={sum.abos + planned} />
       {env > 0 && <EnvLine amount={sum.reste - env} ro={ro} />}
     </section>
   );
@@ -163,6 +166,8 @@ function EnvCard(props: {
   ro: boolean;
   today: string;
   s: Snapshot;
+  reste: number | null;
+  plafond: number | null;
   onEdit: (e: ExpenseRec) => void;
   onSim: (sub: SubscriptionRec) => void;
 }) {
@@ -257,6 +262,33 @@ function EnvCard(props: {
           </div>
         );
       })}
+      {(env.achats > 0 || env.monthly > 0) && (
+        <div className="env-total">
+          {env.achats > 0 && (
+            <div className="row-between"><b>Total des achats</b><b>{eur(env.achats)}</b></div>
+          )}
+          {props.plafond !== null &&
+            env.months.map(({ month, amount }) => {
+              const name = monthName(month).replace(/^./, (c) => c.toUpperCase());
+              if (month === today.slice(0, 7) && props.reste !== null) {
+                const after = props.reste - amount;
+                return (
+                  <span key={month} className="sm">
+                    {name} : {ro ? 'son' : 'ton'} reste passerait de {eur(props.reste)} à <b className={after < 0 ? 't-over' : ''}>{eur(after)}</b>
+                  </span>
+                );
+              }
+              const left = props.plafond! - amount;
+              return (
+                <span key={month} className="sm">
+                  {name} : {eur(amount)} sur {ro ? 'son' : 'ton'} plafond de {eurShort(props.plafond!)}
+                  {left < 0 ? <b className="t-over"> · {eur(-left)} de trop</b> : ` · il resterait ${eur(left)}`}
+                </span>
+              );
+            })}
+          {env.monthly > 0 && <span className="muted sm">Abonnements envisagés : +{eur(env.monthly)}/mois, hors plafond</span>}
+        </div>
+      )}
     </section>
   );
 }

@@ -26,16 +26,20 @@ export interface MonthSummary {
   perso: number;
   commun: number;
   plafond: number | null;
-  /** Plafond moins dépenses perso et part du commun ; null sans plafond. */
+  /** Dépenses d'abonnement du mois (sa part) : elles ne comptent pas dans le plafond du mois. */
+  abos: number;
+  /** Plafond moins dépenses perso et part du commun, hors abonnements ; null sans plafond. */
   reste: number | null;
 }
 
 export function monthSummary(s: Snapshot, member: MemberKey, month: string): MonthSummary {
-  const list = expensesOfMonth(s, month);
+  const all = expensesOfMonth(s, month);
+  const list = all.filter((e) => !e.subId);
   const perso = list.filter((e) => e.owner === member).reduce((t, e) => t + e.amount, 0);
   const commun = list.filter((e) => e.owner === 'commun').reduce((t, e) => t + shareAmt(member, e), 0);
+  const abos = all.filter((e) => e.subId).reduce((t, e) => t + shareAmt(member, e), 0);
   const plafond = s.members[member]?.plafond ?? null;
-  return { perso, commun, plafond, reste: plafond ? plafond - perso - commun : null };
+  return { perso, commun, abos, plafond, reste: plafond ? plafond - perso - commun : null };
 }
 
 export type CatState = 'none' | 'ok' | 'warn' | 'over';

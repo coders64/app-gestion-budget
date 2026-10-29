@@ -171,8 +171,9 @@ describe('prévisions', () => {
     const env = envisaged(base(), 'a', '2026-10-11');
     expect(env.items.map((x) => x.item.id)).toEqual(['velo', 'baskets', 'spotify', 'disney']);
     expect(env.items[0]).toMatchObject({ kind: 'achat', when: 'passe' });
-    // Baskets 60 + Spotify 12 aujourd'hui ; Disney commence en novembre.
-    expect(env.thisMonth).toBeCloseTo(72, 6);
+    // Baskets 60 ce mois-ci ; les abonnements sont hors plafond ; le vélo de septembre est passé.
+    expect(env.thisMonth).toBeCloseTo(60, 6);
+    expect(env.months).toEqual([{ month: '2026-10', amount: 60 }]);
     expect(env.monthly).toBeCloseTo(12 + 5, 6);
     expect(envisaged(base(), 'b', '2026-10-11').items.map((x) => x.item.id)).toEqual(['lea', 'disney']);
   });

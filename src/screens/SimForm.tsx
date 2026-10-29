@@ -190,15 +190,10 @@ function Impact({ s, member, today, sim, ro }: { s: Snapshot; member: MemberKey;
   return (
     <>
       <h2>{ro ? 'Si elle le prend' : 'Si tu le prends'}</h2>
-      {imp.resteBefore !== null && (
+      {(
         <div className="imp">
-          <span className="flabel">{ro ? 'Son' : 'Ton'} reste du mois</span>
-          <div className="ba">
-            <span className="before">{eur(imp.resteBefore)}</span>
-            {arrow}
-            <span className={'after' + (imp.resteBefore - imp.delta < 0 ? ' t-over' : '')}>{eur(imp.resteBefore - imp.delta)}</span>
-          </div>
-          <span className="muted sm">
+          <span className="flabel">Ce mois-ci, hors plafond du mois</span>
+          <span>
             {imp.delta > 0
               ? `${sim.essai ? `Fin de l'essai le ${dateShort(sim.anchor, today)} : ` : ''}−${eur(imp.delta)} en ${month}${isC ? ` (${ta} part)` : ''}`
               : sim.essai

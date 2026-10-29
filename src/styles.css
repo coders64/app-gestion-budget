@@ -196,6 +196,7 @@ input[type="range"] { width: 100%; height: 36px; accent-color: var(--accent-stro
 .env-item { display: flex; flex-direction: column; gap: 10px; padding: 10px 0; border-top: 1.5px dashed var(--dash); }
 .env-item:first-of-type { border-top: 0; }
 .env-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; text-align: left; min-height: 44px; }
+.env-total { display: flex; flex-direction: column; gap: 6px; padding-top: 10px; border-top: 1.5px dashed var(--dash); }
 .env-ask { font-weight: 700; color: var(--warn-ink); background: var(--warn-soft); border: 2px solid var(--line); border-radius: 10px; padding: 6px 10px; font-size: 14px; }
 .imp { display: flex; flex-direction: column; gap: 6px; padding: 12px 0; border-top: 1.5px dashed var(--dash); }
 .imp:first-of-type { border-top: 0; padding-top: 0; }

@@ -277,7 +277,7 @@ try {
   await shot(A.page, '11-commun-A');
   await A.page.getByRole('button', { name: 'Budget', exact: true }).click();
   t = (await text(A.page)).toLowerCase();
-  if (soonSameMonth) ok(t.includes('déjà prévus') && t.includes('12,00'), 'A : Spotify compté dans les prévus du mois');
+  if (soonSameMonth) ok(t.includes("d'abonnements ce mois-ci, hors plafond"), 'A : abonnements montrés à part, hors plafond');
   await shot(A.page, '13-budget-prevus');
   await sync(A);
 
@@ -331,6 +331,7 @@ try {
   t = (await text(A.page)).toLowerCase();
   ok(t.includes('ce que tu envisages') && t.includes('baskets') && t.includes('avec ce que tu envisages'), 'A : Baskets dans « Ce que tu envisages »');
   ok((await reste()) === resteAvant, `A : le vrai reste du mois ne bouge pas (${resteAvant})`);
+  ok(t.includes('total des achats') && t.includes('reste passerait de'), 'A : total des envisagés et impact sur le plafond');
   await shot(A.page, '14-envisage-budget');
 
   await A.page.getByRole('button', { name: 'Abonnements', exact: true }).click();

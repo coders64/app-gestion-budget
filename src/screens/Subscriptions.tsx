@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { shareAmt } from '../domain/budget';
 import { dateShort, daysBetween, inDays, monthName } from '../domain/dates';
 import { chargesFromToday, envisaged } from '../domain/forecast';
-import { monthSummary } from '../domain/budget';
 import { eur } from '../domain/money';
 import { FREQ, deadline, inTrial, isActive, monthlyEq, monthlyTotal, nextDue, sortByDeadline } from '../domain/subs';
 import { other, type MemberKey, type SubscriptionRec } from '../domain/types';
@@ -29,7 +28,6 @@ export function Subscriptions(props: { today: string; onOpen: (sub: Subscription
   const envMonthly = envisaged(s, me, props.today).monthly;
   const envList = s.envSubs.filter(keep).sort((x, y) => x.name.localeCompare(y.name));
   const month = props.today.slice(0, 7);
-  const reste = monthSummary(s, me, month).reste;
 
   function take(sub: SubscriptionRec) {
     const { envisage: _drop, ...rest } = sub;
@@ -72,9 +70,7 @@ export function Subscriptions(props: { today: string; onOpen: (sub: Subscription
             const cost = charges * shareAmt(can ? me : herKey, x);
             const line = !charges
               ? x.essai ? `Gratuit jusqu'au ${dateShort(x.anchor, props.today)}` : `Rien à payer en ${monthName(month)}`
-              : can && reste !== null
-                ? `Ton reste du mois passerait à ${eur(reste - cost)}`
-                : `Coûterait ${eur(cost)} en ${monthName(month)}`;
+              : `Coûterait ${eur(cost)} en ${monthName(month)}, hors plafond du mois`;
             const head = (
               <>
                 <span className="li-main">
